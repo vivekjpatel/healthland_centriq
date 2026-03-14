@@ -2,6 +2,9 @@ import Link from "next/link";
 import { BedBoard } from "@/components/beds/bed-board";
 import { listBedBoard, listUnassignedPatients } from "@/lib/phase1/service";
 import { createClient } from "@/utils/supabase/server";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader } from "@/components/ui/card";
 
 export default async function BedsPage() {
   const supabase = await createClient();
@@ -12,16 +15,18 @@ export default async function BedsPage() {
 
   return (
     <main className="grid gap-6">
-      <header className="section-header surface-card p-5">
-        <div>
-          <p className="chip w-fit">Inpatient Operations</p>
+      <Card className="p-6 hero-card">
+        <CardHeader>
+          <div>
+          <Badge className="w-fit">Inpatient Operations</Badge>
           <h1 className="page-title mt-2">Bed Management</h1>
           <p className="page-subtitle">Track occupancy, transfer flow, and discharge actions in real time.</p>
         </div>
-        <Link href="/patients" className="btn-ghost text-sm">
-          View Patients
-        </Link>
-      </header>
+          <Link href="/patients">
+            <Button variant="outline" size="sm">View Patients</Button>
+          </Link>
+        </CardHeader>
+      </Card>
 
       <BedBoard beds={beds} unassignedPatients={unassignedPatients} />
     </main>

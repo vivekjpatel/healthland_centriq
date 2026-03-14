@@ -1,5 +1,7 @@
 import { listBedBoard, listPatients, listUnassignedPatients } from "@/lib/phase1/service";
 import { createClient } from "@/utils/supabase/server";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardDescription, CardHeader } from "@/components/ui/card";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -18,15 +20,15 @@ export default async function DashboardPage() {
 
   return (
     <main className="grid gap-6">
-      <section className="surface-card p-5">
-        <div className="section-header">
+      <Card className="p-6 hero-card">
+        <CardHeader>
           <div>
-            <p className="chip w-fit">Dashboard</p>
+            <Badge className="w-fit">Dashboard</Badge>
             <h2 className="page-title mt-2">Operations Snapshot</h2>
-            <p className="page-subtitle">Live operational stats for patient flow and bed utilization.</p>
+            <CardDescription>Live operational stats for patient flow and bed utilization.</CardDescription>
           </div>
-        </div>
-      </section>
+        </CardHeader>
+      </Card>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <article className="metric-card">

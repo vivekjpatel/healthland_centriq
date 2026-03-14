@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", description: "Stats overview" },
-  { href: "/patients", label: "Patients", description: "Manage and review" },
-  { href: "/beds", label: "Beds", description: "Assignments and ADT" },
+  { href: "/dashboard", label: "Dashboard", short: "DB", description: "Stats overview" },
+  { href: "/patients", label: "Patients", short: "PT", description: "Manage and review" },
+  { href: "/beds", label: "Beds", short: "BD", description: "Assignments and ADT" },
 ] as const;
 
 type DashboardNavProps = {
@@ -25,12 +25,19 @@ export function DashboardNav({ collapsed = false }: DashboardNavProps) {
           <Link
             key={item.href}
             href={item.href}
-            className={`sidebar-link ${isActive ? "sidebar-link-active" : ""}`}
+            title={collapsed ? item.label : undefined}
+            aria-label={item.label}
+            className={`sidebar-link ${isActive ? "sidebar-link-active" : ""} ${
+              collapsed ? "sidebar-link-collapsed" : ""
+            }`}
           >
-            <span className="text-sm font-semibold">{collapsed ? item.label.slice(0, 1) : item.label}</span>
-            {!collapsed ? (
+            <span className={`sidebar-icon-pill ${isActive ? "sidebar-icon-pill-active" : ""}`}>
+              {item.short}
+            </span>
+            <span className={collapsed ? "hidden" : "grid gap-0.5"}>
+              <span className="text-sm font-semibold tracking-tight">{item.label}</span>
               <span className="text-xs text-[var(--text-muted)]">{item.description}</span>
-            ) : null}
+            </span>
           </Link>
         );
       })}

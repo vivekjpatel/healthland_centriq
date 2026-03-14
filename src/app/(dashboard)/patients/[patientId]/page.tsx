@@ -1,16 +1,21 @@
 import Link from "next/link";
-import { PatientTimeline } from "@/components/patients/patient-timeline";
-import { getPatientTimeline } from "@/lib/phase1/service";
+import { PatientClinicalWorkbench } from "@/components/patients/patient-clinical-workbench";
+import { getPatientClinicalWorkspace } from "@/lib/phase1/service";
 import { createClient } from "@/utils/supabase/server";
 
 type PatientPageProps = {
   params: Promise<{ patientId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 };
 
-export default async function PatientPage({ params }: PatientPageProps) {
+const allowedTabs = new Set(["overview", "clinical", "orders", "revenue", "audit"]);
+
+export default async function PatientPage({ params, searchParams }: PatientPageProps) {
   const { patientId } = await params;
+  const { tab } = await searchParams;
+  const initialTab = tab && allowedTabs.has(tab) ? tab : "overview";
   const supabase = await createClient();
-  const timeline = await getPatientTimeline(supabase, patientId);
+  const workspace = await getPatientClinicalWorkspace(supabase, patientId);
 
   return (
     <main className="grid max-w-5xl gap-6">
@@ -19,7 +24,10 @@ export default async function PatientPage({ params }: PatientPageProps) {
           Back to patient directory
         </Link>
       </div>
-      <PatientTimeline patient={timeline.patient} events={timeline.events} />
+      <PatientClinicalWorkbench
+        data={workspace}
+        initialTab={initialTab as "overview" | "clinical" | "orders" | "revenue" | "audit"}
+      />
     </main>
   );
 }

@@ -1,84 +1,93 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useGlobalLoading } from "@/components/ui/loading-provider";
 import { createClient } from "@/utils/supabase/client";
 
 export default function SignInPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { withLoading } = useGlobalLoading();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
   async function handleSubmit(formData: FormData) {
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
-    const redirectTo = searchParams.get("next") || "/registration";
+    try {
+      await withLoading((async () => {
+        const email = String(formData.get("email") ?? "");
+        const password = String(formData.get("password") ?? "");
+        const redirectTo =
+          new URLSearchParams(window.location.search).get("next") || "/dashboard";
 
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+        const supabase = createClient();
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-    if (signInError) {
-      setError(signInError.message);
+        if (signInError) {
+          setError(signInError.message);
+          return;
+        }
+
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          console.error("[auth-debug] Sign-in succeeded but failed to resolve user.", {
+            error: userError?.message ?? "Unknown user error",
+          });
+        } else {
+          const { data: profiles, error: profileError } = await supabase
+            .from("user_profiles")
+            .select("organization_id, role")
+            .eq("user_id", user.id)
+            .limit(1);
+
+          if (profileError) {
+            console.error("[auth-debug] Failed to fetch signed-in user profile.", {
+              userId: user.id,
+              error: profileError.message,
+            });
+          } else {
+            console.info("[auth-debug] Supabase database query successful for signed-in user.", {
+              userId: user.id,
+              profile: profiles?.[0] ?? null,
+            });
+          }
+
+          const { data: organizations, error: organizationsError } = await supabase
+            .from("organizations")
+            .select("id,name,npi,created_at")
+            .order("created_at", { ascending: false });
+
+          if (organizationsError) {
+            console.error("[auth-debug] Failed to fetch organizations.", {
+              userId: user.id,
+              error: organizationsError.message,
+            });
+          } else {
+            console.info("[auth-debug] Organizations query success.", {
+              userId: user.id,
+              total: organizations?.length ?? 0,
+              organizations: organizations ?? [],
+            });
+          }
+        }
+
+        router.replace(redirectTo);
+        router.refresh();
+      })());
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      console.error("[auth-debug] Sign-in succeeded but failed to resolve user.", {
-        error: userError?.message ?? "Unknown user error",
-      });
-    } else {
-      const { data: profiles, error: profileError } = await supabase
-        .from("user_profiles")
-        .select("organization_id, role")
-        .eq("user_id", user.id)
-        .limit(1);
-
-      if (profileError) {
-        console.error("[auth-debug] Failed to fetch signed-in user profile.", {
-          userId: user.id,
-          error: profileError.message,
-        });
-      } else {
-        console.info("[auth-debug] Supabase database query successful for signed-in user.", {
-          userId: user.id,
-          profile: profiles?.[0] ?? null,
-        });
-      }
-
-      const { data: organizations, error: organizationsError } = await supabase
-        .from("organizations")
-        .select("id,name,npi,created_at")
-        .order("created_at", { ascending: false });
-
-      if (organizationsError) {
-        console.error("[auth-debug] Failed to fetch organizations.", {
-          userId: user.id,
-          error: organizationsError.message,
-        });
-      } else {
-        console.info("[auth-debug] Organizations query success.", {
-          userId: user.id,
-          total: organizations?.length ?? 0,
-          organizations: organizations ?? [],
-        });
-      }
-    }
-
-    router.replace(redirectTo);
-    router.refresh();
   }
 
   return (

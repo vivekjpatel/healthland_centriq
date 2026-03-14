@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { assignBedAction, dischargePatientAction } from "@/actions/bed-management";
 import { TransferDialog } from "@/components/beds/transfer-dialog";
+import { FormPendingBridge } from "@/components/ui/form-pending-bridge";
 
 type PatientLite = {
   id: string;
@@ -50,12 +51,13 @@ export function BedBoard({ beds, unassignedPatients }: BedBoardProps) {
 
   return (
     <div className="grid gap-6">
-      <div className="surface-card p-5">
+      <div className="surface-card p-6">
         <div className="section-header">
           <h2 className="text-lg font-semibold">Assign Patient to Bed</h2>
           <p className="chip">{availableBeds.length} assignable beds</p>
         </div>
         <form action={assignBedAction} className="mt-3 grid gap-3 lg:grid-cols-3">
+          <FormPendingBridge />
           <select name="patientId" required className="app-input">
             <option value="">Select unassigned patient</option>
             {unassignedPatients.map((patient) => (
@@ -89,7 +91,7 @@ export function BedBoard({ beds, unassignedPatients }: BedBoardProps) {
         {statuses.map((status) => {
           const group = beds.filter((bed) => bed.status === status);
           return (
-            <section key={status} className="surface-card p-3">
+            <section key={status} className="surface-card p-4">
               <h3
                 className={`mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusStyles[status]}`}
               >
@@ -98,7 +100,7 @@ export function BedBoard({ beds, unassignedPatients }: BedBoardProps) {
               </h3>
               <div className="grid gap-2">
                 {group.map((bed) => (
-                  <article key={bed.id} className="rounded-xl border border-[var(--border)] bg-[var(--surface-muted)] p-3 text-sm">
+                  <article key={bed.id} className="action-tile text-sm">
                     <p className="font-semibold">
                       {bed.unit} {bed.room}-{bed.bed_label}
                     </p>
@@ -115,6 +117,7 @@ export function BedBoard({ beds, unassignedPatients }: BedBoardProps) {
                         </p>
                         <div className="mt-3 grid gap-2">
                           <form action={dischargePatientAction}>
+                            <FormPendingBridge />
                             <input type="hidden" name="patientId" value={bed.patient.id} />
                             <input type="hidden" name="bedId" value={bed.id} />
                             <button className="btn-danger w-full text-xs" type="submit">

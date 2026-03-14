@@ -1,7 +1,19 @@
 import Link from "next/link";
-import { PatientIntakeForm } from "@/components/registration/patient-intake-form";
+import { PatientRowActions } from "@/components/patients/patient-row-actions";
+import { PatientIntakeModal } from "@/components/registration/patient-intake-modal";
 import { listBedBoard, listPatients } from "@/lib/phase1/service";
 import { createClient } from "@/utils/supabase/server";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableShell,
+} from "@/components/ui/table";
 
 export default async function PatientsPage() {
   const supabase = await createClient();
@@ -18,87 +30,72 @@ export default async function PatientsPage() {
 
   return (
     <main className="grid gap-6">
-      <section className="surface-card p-5">
-        <div className="section-header">
+      <Card className="p-6 hero-card">
+        <CardHeader>
           <div>
-            <p className="chip w-fit">Patient Management</p>
+            <Badge className="w-fit">Patient Management</Badge>
             <h2 className="page-title mt-2">Patient Directory</h2>
             <p className="page-subtitle">
               Register new patients and manage admission status from one page.
             </p>
           </div>
-          <p className="chip">Intake + Manage</p>
-        </div>
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
-        <section className="surface-card p-5">
-          <div className="section-header">
-            <h3 className="text-lg font-semibold">All Patients</h3>
-            <p className="chip">{patients.length} total</p>
+          <div className="flex items-center gap-2">
+            <Badge>Intake + Manage</Badge>
+            <PatientIntakeModal />
           </div>
-          <div className="mt-3 table-shell">
-            <table className="app-table">
-              <thead>
-                <tr>
-                  <th>MRN</th>
-                  <th>Name</th>
-                  <th>DOB</th>
-                  <th>Admission</th>
-                  <th>Registered At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {patients.map((patient) => (
-                  <tr key={patient.id}>
-                    <td className="font-mono">{patient.mrn}</td>
-                    <td>
-                      <Link
-                        href={`/patients/${patient.id}`}
-                        className="font-medium text-[var(--secondary)] hover:underline"
-                      >
-                        {patient.first_name} {patient.last_name}
-                      </Link>
-                    </td>
-                    <td>{patient.dob}</td>
-                    <td>
-                      <span className="chip">
-                        {assignedPatientIds.has(patient.id) ? "Assigned bed" : "Waiting"}
-                      </span>
-                    </td>
-                    <td>{new Date(patient.created_at).toLocaleString()}</td>
-                  </tr>
-                ))}
-                {patients.length === 0 ? (
-                  <tr>
-                    <td className="text-[var(--text-muted)]" colSpan={5}>
-                      No patients registered yet. Use the intake form to add the first patient.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <PatientIntakeForm />
-      </section>
+        </CardHeader>
+      </Card>
 
       <section className="surface-card p-5">
         <div className="section-header">
-          <h3 className="text-lg font-semibold">Management Actions</h3>
-          <p className="chip">Fast Access</p>
+          <h3 className="text-lg font-semibold">All Patients</h3>
+          <p className="chip">{patients.length} total</p>
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <Link href="/beds" className="action-tile text-sm">
-            <p className="font-semibold">Go to Bed Management</p>
-            <p className="text-[var(--text-muted)]">Assign, transfer, and discharge patients.</p>
-          </Link>
-          <Link href="/dashboard" className="action-tile text-sm">
-            <p className="font-semibold">View Dashboard Stats</p>
-            <p className="text-[var(--text-muted)]">Check census and occupancy KPIs.</p>
-          </Link>
-        </div>
+        <TableShell className="mt-3">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>MRN</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>DOB</TableHead>
+                <TableHead>Admission</TableHead>
+                <TableHead>View</TableHead>
+                <TableHead>Actions</TableHead>
+                <TableHead>Registered At</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {patients.map((patient) => (
+                <TableRow key={patient.id}>
+                  <TableCell className="font-mono">{patient.mrn}</TableCell>
+                  <TableCell>{patient.first_name} {patient.last_name}</TableCell>
+                  <TableCell>{patient.dob}</TableCell>
+                  <TableCell>
+                    <span className="chip">
+                      {assignedPatientIds.has(patient.id) ? "Assigned bed" : "Waiting"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Link className="btn-primary px-3 py-2 text-xs" href={`/patient/${patient.id}`}>
+                      View Patient
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <PatientRowActions patient={patient} />
+                  </TableCell>
+                  <TableCell>{new Date(patient.created_at).toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+              {patients.length === 0 ? (
+                <TableRow>
+                  <TableCell className="text-[var(--text-muted)]" colSpan={7}>
+                    No patients registered yet. Use the intake modal to add the first patient.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </TableShell>
       </section>
     </main>
   );
